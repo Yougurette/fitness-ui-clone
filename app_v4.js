@@ -115,11 +115,11 @@ function bindGlobalNav() {
     button.addEventListener('click', () => switchView(button.dataset.target));
   });
 }
-
+  
 function renderHome() {
+  const today = new Date().toLocaleDateString('de-CH');
   const plan = getActivePlan();
-  const cover = plan ? getExerciseById(plan.items[0]?.id) : state.exercises[0];
-
+  const cover = plan ? getExerciseById(plan.items[0]?.id) : state.exercises[0]; 
   screens.home.innerHTML = `
     <header class="red-header">
       <div class="header-top"><div class="avatar">AS</div></div>
@@ -128,7 +128,7 @@ function renderHome() {
     </header>
     <section class="panel">
       <article class="card">
-        <div class="row"><strong>Aktuelles</strong><span>26.02.2026 ✕</span></div>
+        <div class="row"><strong>Aktuelles</strong><span>${today} ✕</span></div>
         <p class="muted">🕺🏽 Kurs-Check-in erfolgt automatisch beim Betreten des Studios.</p>
       </article>
       <div class="section-title"><h3>Deine Trainingspläne</h3><button class="linkish" id="go-builder">Alle ansehen ›</button></div>
