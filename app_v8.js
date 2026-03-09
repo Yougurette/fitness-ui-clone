@@ -263,8 +263,9 @@ function renderHome() {
       state.showQuickActions = false;
       const action = btn.dataset.action;
       if (action === 'record') {
-        switchView('player');
-        renderPlayer();
+        state.planMode = 'builder';
+        switchView('plan');
+        renderPlan();
       } else if (action === 'courses') {
         state.courseView = 'overview';
         switchView('builder');
@@ -291,8 +292,9 @@ function renderHome() {
     renderAnalysis();
   });
   screens.home.querySelector('#record-training')?.addEventListener('click', () => {
-    switchView('player');
-    renderPlayer();
+    state.planMode = 'builder';
+    switchView('plan');
+    renderPlan();
   });
   screens.home.querySelector('#new-plan')?.addEventListener('click', () => {
     const newPlan = { id: crypto.randomUUID(), title: `Neuer Plan ${state.plans.length + 1}`, note: 'Selbst erstellt', items: [], createdAt: Date.now(), calories: 220 };
@@ -516,8 +518,9 @@ function renderPlan() {
       state.showQuickActions = false;
       const action = btn.dataset.action;
       if (action === 'record') {
-        switchView('player');
-        renderPlayer();
+        state.planMode = 'builder';
+        switchView('plan');
+        renderPlan();
       } else if (action === 'courses') {
         state.courseView = 'overview';
         switchView('builder');
@@ -783,6 +786,12 @@ function renderCourses() {
 }
 
 function renderAnalysis() {
+  const points = totalPoints();
+  const target = 800;
+  const pct = Math.max(8, Math.min(96, Math.round((points / target) * 100)));
+  const remaining = Math.max(0, target - points);
+  const daysLeft = 16;
+
   const historyList = state.workoutHistory
     .map(
       (entry) => `
@@ -795,13 +804,38 @@ function renderAnalysis() {
     .join('');
 
   screens.analysis.innerHTML = `
-    <header class="hero-header red"><div class="header-top"><div class="avatar">AS</div></div></header>
+    <header class="hero-header red compact-header">
+      <div class="status-fake"></div>
+      <div class="header-top"><div class="avatar">AS</div><button class="plus-btn" id="analysis-actions">+</button></div>
+    </header>
     <section class="panel">
-      <article class="card"><strong>Aktivitätslevel</strong><p class="muted">Gesamtpunkte: ${totalPoints()}</p></article>
-      <div class="section-title"><h3>Trainingsverlauf</h3></div>
+      <div class="section-title"><h3>Ranking</h3></div>
+      <article class="card ranking-card">
+        <div><strong>März Ranking</strong><div class="rank-pill">noch 22 Tage</div></div>
+        <div class="rank-avatars"><span>AS</span><span>GV</span><span>99+</span></div>
+      </article>
+
+      <div class="section-title"><h3>Aktivitätslevel</h3></div>
+      <article class="card activity-card">
+        <div class="activity-top">
+          <div><div class="muted">Aktuelles Level</div><strong>Level 1: Holz</strong></div>
+          <div><div class="muted">Punkte bis zum nächsten Level</div><strong>${remaining}</strong></div>
+        </div>
+        <div class="progress-ring big" style="--pct:${pct}%">
+          <span><b>${points}</b><small>Aktivitätspunkte</small><small>${daysLeft} Tage verbleibend</small></span>
+        </div>
+      </article>
+
+      <div class="section-title"><h3>Analyse</h3></div>
       ${historyList || '<article class="card"><p class="muted">Noch keine History.</p></article>'}
     </section>
   `;
+
+  screens.analysis.querySelector('#analysis-actions')?.addEventListener('click', () => {
+    state.showQuickActions = true;
+    switchView('home');
+    renderHome();
+  });
 }
 
 function renderAccount() {

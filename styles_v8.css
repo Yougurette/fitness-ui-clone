@@ -766,3 +766,57 @@ button {
 .screen {
   position: absolute;
 }
+
+/* analysis activity ring restoration */
+.ranking-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rank-pill {
+  margin-top: 8px;
+  display: inline-block;
+  background: #ef0a0f;
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+.rank-avatars {
+  display: flex;
+  gap: 8px;
+}
+.rank-avatars span {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #f5e8e8;
+  color: #d5161c;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+.activity-card { padding: 0; overflow: hidden; }
+.activity-top {
+  background: #a88660;
+  color: #fff;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.progress-ring.big {
+  width: min(82%, 320px);
+  margin: 20px auto 18px;
+  background: conic-gradient(#b08f69 var(--pct, 35%), #e8e2da 0);
+}
+.progress-ring.big::after { inset: 42px; background: #f7f7f7; }
+.progress-ring.big span {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  text-align: center;
+}
+.progress-ring.big span b { font-size: 56px; line-height: 1; }
+.progress-ring.big span small { font-size: 14px; color: #444; font-weight: 600; }
