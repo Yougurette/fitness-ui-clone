@@ -21,6 +21,9 @@ The interface design used in this prototype is **inspired by the mobile applicat
 Original website:  
 https://www.activfitness.ch/
 
+Original App: 
+https://www.activfitness.ch/activ-fitness-app/
+
 The UI was recreated solely as a **learning exercise to analyse how fitness apps organise information, workouts, and navigation patterns**.
 
 ---
