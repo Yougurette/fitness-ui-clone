@@ -14,6 +14,13 @@ const state = {
   courseView: 'overview',
   selectedCourseDay: 'Mo 9',
   previousView: 'home',
+  planTab: 'workouts',
+  planMode: 'overview',
+  planSearch: '',
+  bodyPart: 'all',
+  equipment: 'all',
+  muscle: 'all',
+  planDraftIds: [],
 };
 
 const screens = {
@@ -75,6 +82,31 @@ function getExerciseById(id) {
 
 function totalPoints() {
   return state.workoutHistory.reduce((sum, entry) => sum + (entry.points || 0), 0);
+}
+
+
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9äöüß ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function exerciseSearchBlob(ex) {
+  return normalizeText([
+    ex.name,
+    ...(ex.bodyParts || []),
+    ...(ex.equipments || []),
+    ...(ex.targetMuscles || []),
+    ...(ex.secondaryMuscles || []),
+  ].join(' '));
+}
+
+function uniqueSorted(items) {
+  return [...new Set(items.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de'));
 }
 
 function ensureDefaults() {
@@ -274,53 +306,253 @@ function renderHome() {
 
 function renderPlan() {
   const plan = getActivePlan();
+  const cover = plan ? getExerciseById(plan.items[0]?.id) : state.exercises[0];
+
   if (!plan) {
     screens.plan.innerHTML = '<div class="panel"><p class="muted">Kein Plan vorhanden.</p></div>';
     return;
   }
 
-  const cover = getExerciseById(plan.items[0]?.id);
-  const list = plan.items.map((item, index) => {
-    const ex = getExerciseById(item.id);
-    if (!ex) return '';
-    return `
-      <article class="exercise-item" data-exercise-index="${index}">
-        <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy" onerror="this.src='${placeholderSvg}'"/>
-        <div>
-          <h5>${ex.name}</h5>
-          <div class="muted">${item.sets.length} Sätze · ${item.reps} Wdh · ${item.weight} kg</div>
-        </div>
-      </article>
+  if (state.planMode === 'detail') {
+    const list = plan.items
+      .map((item, index) => {
+        const ex = getExerciseById(item.id);
+        if (!ex) return '';
+        return `
+        <article class="exercise-item" data-exercise-index="${index}">
+          <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy" onerror="this.src='${placeholderSvg}'"/>
+          <div>
+            <h5>${ex.name}</h5>
+            <div class="muted">${item.sets.length} Sätze · ${item.reps} Wdh · ${item.weight} kg</div>
+          </div>
+        </article>
+      `;
+      })
+      .join('');
+
+    screens.plan.innerHTML = `
+      <header class="white-header"><button class="icon" id="back-plan-overview">←</button><h2>Workout</h2><button class="icon"> </button></header>
+      <section class="hero">${cover ? `<img src="${imageFor(cover)}" alt="header" onerror="this.src='${placeholderSvg}'"/>` : ''}<div class="hero-overlay"><h2>${plan.title}</h2></div></section>
+      <div class="pills"><span class="pill">${plan.items.length} Übungen • ${plan.calories ?? 305} Kcal</span><span class="pill">${plan.items.length * 28} Aktivitätspunkte</span></div>
+      <section>${list || '<p class="muted" style="padding:12px 16px">Plan ist leer.</p>'}</section>
+      <div class="cta-wrap"><button class="cta" id="start-workout">Workout starten</button></div>
     `;
-  }).join('');
 
-  screens.plan.innerHTML = `
-    <section class="hero">
-      ${cover ? `<img src="${imageFor(cover)}" alt="header" onerror="this.src='${placeholderSvg}'"/>` : ''}
-      <div class="hero-overlay"><h2>${plan.title}</h2></div>
-    </section>
-    <div class="pills">
-      <span class="pill">${plan.items.length} Übungen • ${plan.calories ?? 305} Kcal</span>
-      <span class="pill">${plan.items.length * 28} Aktivitätspunkte</span>
-    </div>
-    <section>${list || '<p class="muted" style="padding:12px 16px">Plan ist leer.</p>'}</section>
-    <div class="cta-wrap"><button class="cta" id="start-workout">Workout starten</button></div>
-  `;
-
-  screens.plan.querySelectorAll('[data-exercise-index]').forEach((row) => {
-    row.addEventListener('click', () => {
-      state.playerExerciseIndex = Number(row.dataset.exerciseIndex);
+    screens.plan.querySelector('#back-plan-overview')?.addEventListener('click', () => {
+      state.planMode = 'overview';
+      renderPlan();
+    });
+    screens.plan.querySelectorAll('[data-exercise-index]').forEach((row) => {
+      row.addEventListener('click', () => {
+        state.playerExerciseIndex = Number(row.dataset.exerciseIndex);
+        state.completionSummary = null;
+        switchView('player');
+        renderPlayer();
+      });
+    });
+    screens.plan.querySelector('#start-workout')?.addEventListener('click', () => {
+      state.playerExerciseIndex = 0;
       state.completionSummary = null;
       switchView('player');
       renderPlayer();
     });
-  });
+    return;
+  }
 
-  screens.plan.querySelector('#start-workout')?.addEventListener('click', () => {
-    state.playerExerciseIndex = 0;
-    state.completionSummary = null;
-    switchView('player');
-    renderPlayer();
+  if (state.planMode === 'builder') {
+    const query = normalizeText(state.planSearch);
+    const tokens = query ? query.split(' ').filter(Boolean) : [];
+    const byBody = (ex) => state.bodyPart === 'all' || (ex.bodyParts || []).includes(state.bodyPart);
+    const byEquipment = (ex) => state.equipment === 'all' || (ex.equipments || []).includes(state.equipment);
+    const byMuscle = (ex) =>
+      state.muscle === 'all' || [...(ex.targetMuscles || []), ...(ex.secondaryMuscles || [])].includes(state.muscle);
+    const inSearch = (ex) => {
+      if (!tokens.length) return true;
+      const blob = exerciseSearchBlob(ex);
+      return tokens.every((t) => blob.includes(t));
+    };
+
+    const preliminary = state.exercises.filter((ex) => inSearch(ex) && byBody(ex) && byEquipment(ex) && byMuscle(ex));
+    const bodyParts = uniqueSorted(preliminary.flatMap((ex) => ex.bodyParts || []));
+    const equipments = uniqueSorted(preliminary.flatMap((ex) => ex.equipments || []));
+    const muscles = uniqueSorted(preliminary.flatMap((ex) => [...(ex.targetMuscles || []), ...(ex.secondaryMuscles || [])]));
+
+    const filtered = preliminary.slice(0, 24);
+    const draftRows = state.planDraftIds
+      .map((id) => {
+        const ex = getExerciseById(id);
+        if (!ex) return '';
+        return `<article class="exercise-item selected"><img src="${imageFor(ex)}" alt="${ex.name}" onerror="this.src='${placeholderSvg}'"/><div><h5>${ex.name}</h5><div class="muted">${ex.bodyParts?.[0] ?? '-'} · ${ex.equipments?.[0] ?? '-'}</div></div><button class="icon" data-remove-id="${id}">✕</button></article>`;
+      })
+      .join('');
+
+    screens.plan.innerHTML = `
+      <header class="white-header"><button class="icon" id="back-plan-overview">←</button><h2>Trainingsplan erstellen</h2><button class="icon" id="reset-builder">↺</button></header>
+      <section class="panel">
+        <div class="controls controls-builder">
+          <input id="plan-search" placeholder="Übung suchen" value="${state.planSearch}" />
+          <select id="body-filter"><option value="all">Body Part</option>${bodyParts.map((part)=>`<option value="${part}" ${part===state.bodyPart?'selected':''}>${part}</option>`).join('')}</select>
+          <select id="equipment-filter"><option value="all">Equipment</option>${equipments.map((eq)=>`<option value="${eq}" ${eq===state.equipment?'selected':''}>${eq}</option>`).join('')}</select>
+          <select id="muscle-filter"><option value="all">Muscle</option>${muscles.map((m)=>`<option value="${m}" ${m===state.muscle?'selected':''}>${m}</option>`).join('')}</select>
+        </div>
+        <div class="section-title"><h3>Suchergebnisse</h3><span class="muted">${filtered.length}</span></div>
+        <div>${filtered
+          .map((ex) => `<article class="exercise-item"><img src="${imageFor(ex)}" alt="${ex.name}" onerror="this.src='${placeholderSvg}'"/><div><h5>${ex.name}</h5><div class="muted">${ex.bodyParts?.[0] ?? '-'} · ${ex.equipments?.[0] ?? '-'}</div></div><button class="icon" data-add-id="${ex.exerciseId}">+</button></article>`)
+          .join('')}</div>
+        <div class="section-title"><h3>Neuer Plan</h3><span class="muted">${state.planDraftIds.length} Übungen</span></div>
+        <div>${draftRows || '<article class="card"><p class="muted">Noch keine Übungen ausgewählt.</p></article>'}</div>
+        <div class="cta-wrap"><button class="cta" id="save-new-plan">Plan anlegen</button></div>
+      </section>
+    `;
+
+    screens.plan.querySelector('#back-plan-overview')?.addEventListener('click', () => {
+      state.planMode = 'overview';
+      renderPlan();
+    });
+    screens.plan.querySelector('#reset-builder')?.addEventListener('click', () => {
+      state.planSearch = '';
+      state.bodyPart = 'all';
+      state.equipment = 'all';
+      state.muscle = 'all';
+      state.planDraftIds = [];
+      renderPlan();
+    });
+    screens.plan.querySelector('#plan-search')?.addEventListener('input', (e) => {
+      state.planSearch = e.target.value;
+      renderPlan();
+    });
+    screens.plan.querySelector('#body-filter')?.addEventListener('change', (e) => {
+      state.bodyPart = e.target.value;
+      renderPlan();
+    });
+    screens.plan.querySelector('#equipment-filter')?.addEventListener('change', (e) => {
+      state.equipment = e.target.value;
+      renderPlan();
+    });
+    screens.plan.querySelector('#muscle-filter')?.addEventListener('change', (e) => {
+      state.muscle = e.target.value;
+      renderPlan();
+    });
+    screens.plan.querySelectorAll('[data-add-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.addId;
+        if (!state.planDraftIds.includes(id)) state.planDraftIds.push(id);
+        renderPlan();
+      });
+    });
+    screens.plan.querySelectorAll('[data-remove-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.planDraftIds = state.planDraftIds.filter((id) => id !== btn.dataset.removeId);
+        renderPlan();
+      });
+    });
+    screens.plan.querySelector('#save-new-plan')?.addEventListener('click', () => {
+      if (!state.planDraftIds.length) return;
+      const items = state.planDraftIds.map((id) => ({
+        id,
+        reps: 12,
+        weight: 20,
+        sets: [
+          { reps: 12, kg: 20, done: false },
+          { reps: 10, kg: 20, done: false },
+        ],
+      }));
+      const newPlan = {
+        id: crypto.randomUUID(),
+        title: `Eigener Plan ${state.plans.length + 1}`,
+        note: 'Selbst erstellt',
+        items,
+        createdAt: Date.now(),
+        calories: items.length * 22,
+      };
+      state.plans.unshift(newPlan);
+      state.activePlanId = newPlan.id;
+      state.planDraftIds = [];
+      state.planMode = 'overview';
+      saveStorage();
+      renderHome();
+      renderPlan();
+    });
+    return;
+  }
+
+  const historyRows = state.workoutHistory
+    .slice(0, 5)
+    .map((entry) => `<article class="card history-item"><div class="row"><strong>${entry.title}</strong><span class="muted">${new Date(entry.date).toLocaleDateString('de-DE')}</span></div><p class="muted">${entry.exercises} Übungen · ${entry.calories} Kcal · ${entry.points} Punkte</p></article>`)
+    .join('');
+
+  screens.plan.innerHTML = `
+    <header class="white-header workouts-head"><button class="icon" id="back-home-from-plan">←</button><h2>Workouts</h2><button class="plus-btn plus-plan" id="open-actions-plan">+</button></header>
+    <section class="panel workouts-overview">
+      <div class="tabs workouts-tabs">
+        <button class="tab ${state.planTab === 'workouts' ? 'active' : ''}" data-plan-tab="workouts">WORKOUTS</button>
+        <button class="tab ${state.planTab === 'history' ? 'active' : ''}" data-plan-tab="history">VERLAUF</button>
+      </div>
+
+      ${state.planTab === 'workouts' ? `
+      <div class="section-title"><h3>Von meinem Trainer</h3><button class="linkish" id="go-plan-list">Alle ansehen ›</button></div>
+      <article class="hero workout-card" id="open-plan-detail">${cover ? `<img src="${imageFor(cover)}" alt="Planbild" onerror="this.src='${placeholderSvg}'"/>` : ''}<div class="hero-overlay"><h4>${plan.title}</h4><span>${plan.items.length} Übungen · ${plan.calories ?? 305} Kcal</span></div></article>
+      <article class="card create-plan-card"><h4>Erstelle deinen eigenen Trainingsplan</h4><p class="muted">Erstelle deinen eigenen Trainingsplan mit über 1.000 Übungen aus unserer Bibliothek.</p><button class="create-btn" id="open-plan-builder">+ Anlegen</button></article>
+      ` : `<div>${historyRows || '<article class="card"><p class="muted">Noch keine Einträge.</p></article>'}</div>`}
+    </section>
+
+    ${state.showQuickActions ? `<div class="sheet-backdrop" id="close-sheet-plan"></div><aside class="quick-sheet"><h4>Schnellaktionen</h4><button data-action="record">Training erfassen <span>›</span></button><button data-action="courses">Kurse <span>›</span></button><button data-action="history">Trainingsverlauf <span>›</span></button><button data-action="locations">Standorte <span>›</span></button></aside>` : ''}
+  `;
+
+  screens.plan.querySelector('#back-home-from-plan')?.addEventListener('click', () => {
+    switchView('home');
+    renderHome();
+  });
+  screens.plan.querySelector('#open-actions-plan')?.addEventListener('click', () => {
+    state.showQuickActions = true;
+    renderPlan();
+  });
+  screens.plan.querySelector('#close-sheet-plan')?.addEventListener('click', () => {
+    state.showQuickActions = false;
+    renderPlan();
+  });
+  screens.plan.querySelectorAll('.quick-sheet [data-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.showQuickActions = false;
+      const action = btn.dataset.action;
+      if (action === 'record') {
+        switchView('player');
+        renderPlayer();
+      } else if (action === 'courses') {
+        state.courseView = 'overview';
+        switchView('builder');
+        renderCourses();
+      } else if (action === 'history') {
+        switchView('analysis');
+        renderAnalysis();
+      } else {
+        switchView('account');
+        renderAccount();
+      }
+    });
+  });
+  screens.plan.querySelectorAll('[data-plan-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.planTab = btn.dataset.planTab;
+      renderPlan();
+    });
+  });
+  screens.plan.querySelector('#go-plan-list')?.addEventListener('click', () => {
+    state.planMode = 'detail';
+    renderPlan();
+  });
+  screens.plan.querySelector('#open-plan-detail')?.addEventListener('click', () => {
+    state.planMode = 'detail';
+    renderPlan();
+  });
+  screens.plan.querySelector('#open-plan-builder')?.addEventListener('click', () => {
+    state.planMode = 'builder';
+    state.planSearch = '';
+    state.bodyPart = 'all';
+    state.equipment = 'all';
+    state.muscle = 'all';
+    state.planDraftIds = [];
+    renderPlan();
   });
 }
 

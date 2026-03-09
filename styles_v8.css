@@ -700,3 +700,69 @@ button {
   .hero-title-wrap h1 { font-size: 34px !important; }
   .day-chip strong { font-size: 32px; }
 }
+
+/* V8.1 corrections */
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 30;
+}
+.quick-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px 20px 0 0;
+  z-index: 31;
+  padding: 14px 16px 20px;
+}
+.quick-sheet h4 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.quick-sheet button {
+  font-size: 18px;
+  padding: 14px 2px;
+}
+
+.workouts-head {
+  background: #f6f6f6;
+}
+.plus-plan {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 28px;
+}
+.workouts-tabs {
+  margin-top: -6px;
+}
+.workouts-overview .tab {
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-weight: 700;
+}
+.workouts-overview .tab.active {
+  background: transparent;
+  color: #ef0a0f;
+  border-bottom-color: #ef0a0f;
+}
+.create-plan-card h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+.create-btn {
+  width: 100%;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #ececf1;
+  padding: 12px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* keep actions within phone shell only */
+.screen {
+  position: absolute;
+}
