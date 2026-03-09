@@ -11,6 +11,7 @@ The prototype was built using:
 - CSS
 - JavaScript
 - AI-assisted development tools
+- Dataset from: https://www.kaggle.com/datasets/exercisedb/fitness-exercises-dataset?
 ---
 
 ## Design Reference
