@@ -109,6 +109,43 @@ function uniqueSorted(items) {
   return [...new Set(items.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de'));
 }
 
+
+function bindQuickSheetGesture(scope, onClose) {
+  const sheet = scope.querySelector('.quick-sheet');
+  if (!sheet) return;
+
+  let startY = 0;
+  let deltaY = 0;
+
+  const onMove = (event) => {
+    deltaY = Math.max(0, event.touches[0].clientY - startY);
+    sheet.style.transform = `translateY(${deltaY}px)`;
+  };
+
+  const onEnd = () => {
+    sheet.removeEventListener('touchmove', onMove);
+    sheet.removeEventListener('touchend', onEnd);
+    if (deltaY > 70) {
+      onClose();
+      return;
+    }
+    sheet.style.transform = '';
+  };
+
+  sheet.addEventListener('touchstart', (event) => {
+    startY = event.touches[0].clientY;
+    deltaY = 0;
+    sheet.style.transition = 'none';
+    sheet.addEventListener('touchmove', onMove, { passive: true });
+    sheet.addEventListener('touchend', onEnd, { passive: true });
+  }, { passive: true });
+
+  requestAnimationFrame(() => {
+    sheet.classList.add('open');
+    sheet.style.transition = '';
+  });
+}
+
 function ensureDefaults() {
   if (!state.plans.length && state.exercises.length) {
     const items = state.exercises.slice(0, 10).map((ex) => ({
@@ -239,7 +276,7 @@ function renderHome() {
     </section>
 
     ${state.showQuickActions ? `<div class="sheet-backdrop" id="close-sheet"></div>
-      <aside class="quick-sheet"><h4>Schnellzugriff</h4><button data-action="record">Training erfassen <span>›</span></button><button data-action="courses">Kurse <span>›</span></button><button data-action="history">Trainingsverlauf <span>›</span></button><button data-action="locations">Standorte <span>›</span></button></aside>` : ''}
+      <aside class="quick-sheet"><div class="sheet-grabber"></div><h4>Schnellzugriff</h4><button data-action="record">Training erfassen <span>›</span></button><button data-action="courses">Kurse <span>›</span></button><button data-action="history">Trainingsverlauf <span>›</span></button><button data-action="locations">Standorte <span>›</span></button></aside>` : ''}
   `;
 
   screens.home.querySelector('#open-profile')?.addEventListener('click', () => {
@@ -255,6 +292,10 @@ function renderHome() {
     renderHome();
   });
   screens.home.querySelector('#close-sheet')?.addEventListener('click', () => {
+    state.showQuickActions = false;
+    renderHome();
+  });
+  bindQuickSheetGesture(screens.home, () => {
     state.showQuickActions = false;
     renderHome();
   });
@@ -280,6 +321,7 @@ function renderHome() {
     });
   });
   screens.home.querySelector('#open-plan')?.addEventListener('click', () => {
+    state.planMode = 'detail';
     switchView('plan');
     renderPlan();
   });
@@ -403,7 +445,7 @@ function renderPlan() {
           .join('')}</div>
         <div class="section-title"><h3>Neuer Plan</h3><span class="muted">${state.planDraftIds.length} Übungen</span></div>
         <div>${draftRows || '<article class="card"><p class="muted">Noch keine Übungen ausgewählt.</p></article>'}</div>
-        <div class="cta-wrap"><button class="cta" id="save-new-plan">Plan anlegen</button></div>
+        <div class="builder-bottom-actions"><button class="small-btn" id="builder-new">Neuer Plan</button><button class="small-btn primary" id="save-new-plan">Plan speichern</button><button class="small-btn danger" id="builder-delete">Löschen</button></div><div style="height:74px"></div>
       </section>
     `;
 
@@ -447,6 +489,30 @@ function renderPlan() {
         state.planDraftIds = state.planDraftIds.filter((id) => id !== btn.dataset.removeId);
         renderPlan();
       });
+    });
+    screens.plan.querySelector('#builder-new')?.addEventListener('click', () => {
+      state.planDraftIds = [];
+      state.planSearch = '';
+      state.bodyPart = 'all';
+      state.equipment = 'all';
+      state.muscle = 'all';
+      renderPlan();
+    });
+    screens.plan.querySelector('#builder-delete')?.addEventListener('click', () => {
+      if (state.planDraftIds.length) {
+        state.planDraftIds = [];
+        renderPlan();
+        return;
+      }
+      const idx = state.plans.findIndex((plan) => plan.id === state.activePlanId);
+      if (idx >= 0) {
+        state.plans.splice(idx, 1);
+        state.activePlanId = state.plans[0]?.id || null;
+        saveStorage();
+      }
+      ensureDefaults();
+      renderHome();
+      renderPlan();
     });
     screens.plan.querySelector('#save-new-plan')?.addEventListener('click', () => {
       if (!state.planDraftIds.length) return;
@@ -498,7 +564,7 @@ function renderPlan() {
       ` : `<div>${historyRows || '<article class="card"><p class="muted">Noch keine Einträge.</p></article>'}</div>`}
     </section>
 
-    ${state.showQuickActions ? `<div class="sheet-backdrop" id="close-sheet-plan"></div><aside class="quick-sheet"><h4>Schnellaktionen</h4><button data-action="record">Training erfassen <span>›</span></button><button data-action="courses">Kurse <span>›</span></button><button data-action="history">Trainingsverlauf <span>›</span></button><button data-action="locations">Standorte <span>›</span></button></aside>` : ''}
+    ${state.showQuickActions ? `<div class="sheet-backdrop" id="close-sheet-plan"></div><aside class="quick-sheet"><div class="sheet-grabber"></div><h4>Schnellaktionen</h4><button data-action="record">Training erfassen <span>›</span></button><button data-action="courses">Kurse <span>›</span></button><button data-action="history">Trainingsverlauf <span>›</span></button><button data-action="locations">Standorte <span>›</span></button></aside>` : ''}
   `;
 
   screens.plan.querySelector('#back-home-from-plan')?.addEventListener('click', () => {
@@ -510,6 +576,10 @@ function renderPlan() {
     renderPlan();
   });
   screens.plan.querySelector('#close-sheet-plan')?.addEventListener('click', () => {
+    state.showQuickActions = false;
+    renderPlan();
+  });
+  bindQuickSheetGesture(screens.plan, () => {
     state.showQuickActions = false;
     renderPlan();
   });

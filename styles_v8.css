@@ -820,3 +820,50 @@ button {
 }
 .progress-ring.big span b { font-size: 56px; line-height: 1; }
 .progress-ring.big span small { font-size: 14px; color: #444; font-weight: 600; }
+
+/* bottom sheet motion + builder fixed actions */
+.quick-sheet {
+  max-height: 56%;
+  overflow: auto;
+  transform: translateY(18px);
+  opacity: 0.98;
+  transition: transform .22s ease, opacity .22s ease;
+}
+.quick-sheet.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+.sheet-grabber {
+  width: 42px;
+  height: 5px;
+  border-radius: 99px;
+  background: #d1d1d1;
+  margin: 0 auto 8px;
+}
+
+.builder-bottom-actions {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 84px;
+  width: min(100vw, 390px);
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(236,236,236,0), #ececec 22%);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.builder-bottom-actions .small-btn {
+  border: 1px solid #d8d8d8;
+  background: #fff;
+  color: #333;
+  padding: 10px 8px;
+}
+.builder-bottom-actions .small-btn.primary {
+  background: #ef0a0f;
+  color: #fff;
+  border-color: #ef0a0f;
+}
+.builder-bottom-actions .small-btn.danger {
+  color: #bf1f24;
+}
