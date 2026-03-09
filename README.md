@@ -27,7 +27,6 @@ The UI was recreated solely as a **learning exercise to analyse how fitness apps
 ## Important Disclaimer
 
 - This project is **not affiliated with, endorsed by, or connected to ACTIV FITNESS**.
-- All **brand names, trademarks, and design ownership remain with ACTIV FITNESS**.
 - The interface was recreated **only for educational and research purposes**.
 - This prototype **does not reproduce the real application functionality**.
 - The project **does not connect to any real ACTIV FITNESS systems, APIs, or services**.
