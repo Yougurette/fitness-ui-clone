@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'activ-fitness-ui-state-v4';
+const STORAGE_KEY = 'activ-fitness-ui-state-v2';
 
 const state = {
   view: 'home',
@@ -9,8 +9,6 @@ const state = {
   search: '',
   bodyPart: 'all',
   equipment: 'all',
-  workoutHistory: [],
-  completionSummary: null,
 };
 
 const screens = {
@@ -24,9 +22,6 @@ const screens = {
 
 const navItems = [...document.querySelectorAll('.nav-item')];
 
-const placeholderSvg =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='100%25' height='100%25' fill='%23ddd'/%3E%3C/svg%3E";
-
 function imageFor(ex) {
   return `./gifs_180x180/${ex.gifUrl}`;
 }
@@ -38,8 +33,9 @@ function readStorage() {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed.plans)) state.plans = parsed.plans;
     if (typeof parsed.activePlanId === 'string') state.activePlanId = parsed.activePlanId;
-    if (Array.isArray(parsed.workoutHistory)) state.workoutHistory = parsed.workoutHistory;
-  } catch (_) {}
+  } catch (_) {
+    // ignore invalid cache
+  }
 }
 
 function saveStorage() {
@@ -48,7 +44,6 @@ function saveStorage() {
     JSON.stringify({
       plans: state.plans,
       activePlanId: state.activePlanId,
-      workoutHistory: state.workoutHistory,
     }),
   );
 }
@@ -62,11 +57,7 @@ function getExerciseById(id) {
 }
 
 function totalPoints() {
-  return state.workoutHistory.reduce((sum, entry) => sum + (entry.points || 0), 0);
-}
-
-function totalCaloriesFromHistory() {
-  return state.workoutHistory.reduce((sum, entry) => sum + (entry.calories || 0), 0);
+  return state.plans.reduce((sum, plan) => sum + plan.items.length * 25, 0);
 }
 
 function ensureDefaults() {
@@ -80,7 +71,6 @@ function ensureDefaults() {
         { reps: 12, kg: 20, done: false },
       ],
     }));
-
     const defaultPlan = {
       id: crypto.randomUUID(),
       title: 'Ganzkörper 2x12 (9-11)',
@@ -88,7 +78,6 @@ function ensureDefaults() {
       items,
       createdAt: Date.now(),
     };
-
     state.plans = [defaultPlan];
     state.activePlanId = defaultPlan.id;
   }
@@ -112,17 +101,18 @@ function switchView(view) {
 
 function bindGlobalNav() {
   navItems.forEach((button) => {
-    button.addEventListener('click', () => switchView(button.dataset.target));
+    button.addEventListener('click', () => {
+      switchView(button.dataset.target);
+    });
   });
 }
 
 function renderHome() {
   const plan = getActivePlan();
   const cover = plan ? getExerciseById(plan.items[0]?.id) : state.exercises[0];
-
   screens.home.innerHTML = `
     <header class="red-header">
-      <div class="header-top"><div class="avatar">AS</div></div>
+      <div class="header-top"><div class="avatar">AS</div><button class="plus-btn" id="go-builder">+</button></div>
       <h1>Hi Alexandra!</h1>
       <p>Auf die Plätze. Fertig. Workout!</p>
     </header>
@@ -131,9 +121,9 @@ function renderHome() {
         <div class="row"><strong>Aktuelles</strong><span>26.02.2026 ✕</span></div>
         <p class="muted">🕺🏽 Kurs-Check-in erfolgt automatisch beim Betreten des Studios.</p>
       </article>
-      <div class="section-title"><h3>Deine Trainingspläne</h3><button class="linkish" id="go-builder">Alle ansehen ›</button></div>
+      <div class="section-title"><h3>Deine Trainingspläne</h3><button class="linkish" id="open-plan-list">Alle ansehen ›</button></div>
       <article class="hero" id="open-plan">
-        ${cover ? `<img src="${imageFor(cover)}" alt="plan cover" onerror="this.src='${placeholderSvg}'"/>` : ''}
+        ${cover ? `<img src="${imageFor(cover)}" alt="plan cover" onerror="this.style.display='none'"/>` : ''}
         <div class="hero-overlay">
           <small>${plan?.note ?? 'Von meinem Trainer'}</small>
           <h4>${plan?.title ?? 'Neuer Plan'}</h4>
@@ -147,7 +137,10 @@ function renderHome() {
     switchView('plan');
     renderPlan();
   });
-
+  screens.home.querySelector('#open-plan-list')?.addEventListener('click', () => {
+    switchView('builder');
+    renderBuilder();
+  });
   screens.home.querySelector('#go-builder')?.addEventListener('click', () => {
     switchView('builder');
     renderBuilder();
@@ -157,19 +150,18 @@ function renderHome() {
 function renderPlan() {
   const plan = getActivePlan();
   if (!plan) {
-    screens.plan.innerHTML = '<div class="panel"><p class="muted">Kein Plan vorhanden.</p></div>';
+    screens.plan.innerHTML = `<div class="panel"><p class="muted">Kein Plan vorhanden. Erstelle einen Plan im Builder.</p></div>`;
     return;
   }
 
   const cover = getExerciseById(plan.items[0]?.id);
-
   const list = plan.items
     .map((item, index) => {
       const ex = getExerciseById(item.id);
       if (!ex) return '';
       return `
         <article class="exercise-item" data-exercise-index="${index}">
-          <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy" onerror="this.src='${placeholderSvg}'"/>
+          <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%22180%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/%3E%3C/svg%3E'"/>
           <div>
             <h5>${ex.name}</h5>
             <div class="muted">${item.sets.length} Sätze · ${item.reps} Wdh · ${item.weight} kg</div>
@@ -182,7 +174,7 @@ function renderPlan() {
 
   screens.plan.innerHTML = `
     <section class="hero">
-      ${cover ? `<img src="${imageFor(cover)}" alt="header" onerror="this.src='${placeholderSvg}'"/>` : ''}
+      ${cover ? `<img src="${imageFor(cover)}" alt="header"/>` : ''}
       <div class="hero-overlay"><h2>${plan.title}</h2></div>
     </section>
     <div class="pills">
@@ -196,7 +188,6 @@ function renderPlan() {
   screens.plan.querySelectorAll('[data-exercise-index]').forEach((row) => {
     row.addEventListener('click', () => {
       state.playerExerciseIndex = Number(row.dataset.exerciseIndex);
-      state.completionSummary = null;
       switchView('player');
       renderPlayer();
     });
@@ -205,16 +196,17 @@ function renderPlan() {
   screens.plan.querySelectorAll('[data-remove]').forEach((button) => {
     button.addEventListener('click', (event) => {
       event.stopPropagation();
-      plan.items = plan.items.filter((item) => item.id !== button.dataset.remove);
+      const id = button.dataset.remove;
+      plan.items = plan.items.filter((item) => item.id !== id);
       saveStorage();
       renderPlan();
       renderHome();
+      renderAnalysis();
     });
   });
 
   screens.plan.querySelector('#start-workout')?.addEventListener('click', () => {
     state.playerExerciseIndex = 0;
-    state.completionSummary = null;
     switchView('player');
     renderPlayer();
   });
@@ -232,43 +224,28 @@ function renderPlayer() {
   const ex = getExerciseById(item.id);
   const doneCount = item.sets.filter((set) => set.done).length;
 
-  const completionOverlay = state.completionSummary
-    ? `
-      <div class="completion-modal">
-        <h3>Workout abgeschlossen ✅</h3>
-        <p>${state.completionSummary.title}</p>
-        <p>${state.completionSummary.exercises} Übungen • ${state.completionSummary.calories} Kcal • ${state.completionSummary.points} Punkte</p>
-        <div class="set-actions">
-          <button class="small-btn" id="close-summary">Zurück</button>
-          <button class="small-btn" id="go-analysis">Analyse ansehen</button>
-        </div>
-      </div>
-    `
-    : '';
-
   screens.player.innerHTML = `
     <header class="player-head"><button class="icon" id="back-plan">←</button><span>Training aufzeichnen</span><button class="icon" id="next-ex">→</button></header>
     <article class="player-card">
-      ${ex ? `<img src="${imageFor(ex)}" alt="${ex.name}" onerror="this.src='${placeholderSvg}'"/>` : ''}
+      ${ex ? `<img src="${imageFor(ex)}" alt="${ex.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22180%22 height=%22180%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/%3E%3C/svg%3E'"/>` : ''}
       <h3>${ex?.name ?? 'Übung'}</h3>
       <div class="pills" style="padding-inline:0"><span class="pill">${state.playerExerciseIndex + 1}/${plan.items.length}</span><span class="pill">${doneCount}/${item.sets.length} fertig</span></div>
       <div class="table-head"><span>Satz</span><span>Wdh.</span><span>kg</span><span>Fertig</span></div>
       ${item.sets
         .map(
           (set, index) => `
-            <div class="set-row">
-              <span>${index + 1}</span>
-              <input data-reps="${index}" value="${set.reps}" inputmode="numeric" />
-              <input data-kg="${index}" value="${set.kg}" inputmode="numeric" />
-              <button class="check ${set.done ? 'done' : ''}" data-done="${index}">${set.done ? '✓' : '○'}</button>
-            </div>`,
+        <div class="set-row">
+          <span>${index + 1}</span>
+          <input data-reps="${index}" value="${set.reps}" inputmode="numeric" />
+          <input data-kg="${index}" value="${set.kg}" inputmode="numeric" />
+          <button class="check ${set.done ? 'done' : ''}" data-done="${index}">${set.done ? '✓' : '○'}</button>
+        </div>`,
         )
         .join('')}
       <div class="set-actions"><button class="small-btn" id="remove-set">– Satz</button><button class="small-btn" id="add-set">+ Satz</button></div>
       <div class="switch-actions"><button class="small-btn" id="prev-ex">← Vorherige</button><button class="small-btn" id="next-ex-2">Nächste →</button></div>
     </article>
     <div class="cta-wrap"><button class="cta" id="finish">Training abschließen</button></div>
-    ${completionOverlay}
   `;
 
   screens.player.querySelector('#back-plan')?.addEventListener('click', () => switchView('plan'));
@@ -319,50 +296,15 @@ function renderPlayer() {
   });
 
   screens.player.querySelector('#finish')?.addEventListener('click', () => {
-    const totalSets = plan.items.reduce((sum, planItem) => sum + planItem.sets.length, 0);
-    const doneSets = plan.items.reduce(
-      (sum, planItem) => sum + planItem.sets.filter((set) => set.done).length,
-      0,
-    );
-    const calories = plan.items.length * 22;
-    const points = doneSets * 12;
-
-    const entry = {
-      id: crypto.randomUUID(),
-      title: plan.title,
-      exercises: plan.items.length,
-      calories,
-      points,
-      doneSets,
-      totalSets,
-      date: new Date().toISOString(),
-    };
-
-    state.workoutHistory.unshift(entry);
-    state.workoutHistory = state.workoutHistory.slice(0, 30);
-    state.completionSummary = entry;
-
     plan.items.forEach((planItem) => {
       planItem.sets.forEach((set) => {
         set.done = false;
       });
     });
-
     saveStorage();
     renderPlayer();
     renderAnalysis();
-  });
-
-  screens.player.querySelector('#close-summary')?.addEventListener('click', () => {
-    state.completionSummary = null;
-    switchView('home');
-    renderHome();
-  });
-
-  screens.player.querySelector('#go-analysis')?.addEventListener('click', () => {
-    state.completionSummary = null;
-    switchView('analysis');
-    renderAnalysis();
+    alert('Training gespeichert ✅');
   });
 }
 
@@ -395,20 +337,13 @@ function renderBuilder() {
     return !inPlan && bySearch && byBody && byEq;
   });
 
-  const planSwitch = state.plans
-    .map(
-      (p) =>
-        `<option value="${p.id}" ${p.id === state.activePlanId ? 'selected' : ''}>${p.title} (${p.items.length})</option>`,
-    )
-    .join('');
-
   const builderList = plan.items
     .map((item, index) => {
       const ex = getExerciseById(item.id);
       if (!ex) return '';
       return `
-        <article class="exercise-item">
-          <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy" onerror="this.src='${placeholderSvg}'"/>
+        <article class="exercise-item ${index === state.playerExerciseIndex ? 'selected' : ''}">
+          <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy"/>
           <div><h5>${ex.name}</h5><div class="muted">${item.sets.length} Sätze</div></div>
           <div class="row">
             <button class="icon" data-up="${index}">↑</button>
@@ -424,7 +359,7 @@ function renderBuilder() {
     .map(
       (ex) => `
       <article class="exercise-item">
-        <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy" onerror="this.src='${placeholderSvg}'"/>
+        <img src="${imageFor(ex)}" alt="${ex.name}" loading="lazy"/>
         <div><h5>${ex.name}</h5><div class="muted">${ex.bodyParts?.[0] ?? '-'} · ${ex.equipments?.[0] ?? '-'}</div></div>
         <button class="icon" data-add="${ex.exerciseId}">＋</button>
       </article>
@@ -434,13 +369,13 @@ function renderBuilder() {
 
   screens.builder.innerHTML = `
     <header class="red-header">
-      <div class="header-top"><div class="avatar">AS</div><button class="plus-btn" id="create-plan">+</button></div>
+      <div class="header-top"><div class="avatar">AS</div><button class="plus-btn" id="create-plan">Neu</button></div>
       <h1>Workout Builder</h1>
       <p>Stelle dein Training interaktiv zusammen.</p>
     </header>
     <section class="panel">
       <article class="card">
-        <div class="row"><strong>Aktiver Plan</strong><select id="plan-switch" class="plan-select">${planSwitch}</select></div>
+        <div class="row"><strong>Aktiver Plan</strong><strong>${plan.title}</strong></div>
         <div class="controls">
           <input id="search" placeholder="Suche Übung..." value="${state.search}" />
           <select id="body-filter">${bodyParts
@@ -465,14 +400,6 @@ function renderBuilder() {
       <div class="cta-wrap" style="padding-inline:0"><button class="cta" id="save-plan">Plan speichern</button></div>
     </section>
   `;
-
-  screens.builder.querySelector('#plan-switch')?.addEventListener('change', (e) => {
-    state.activePlanId = e.target.value;
-    saveStorage();
-    renderBuilder();
-    renderHome();
-    renderPlan();
-  });
 
   screens.builder.querySelector('#search')?.addEventListener('input', (e) => {
     state.search = e.target.value;
@@ -506,6 +433,7 @@ function renderBuilder() {
       renderBuilder();
       renderHome();
       renderPlan();
+      renderAnalysis();
     });
   });
 
@@ -557,39 +485,28 @@ function renderBuilder() {
 }
 
 function renderAnalysis() {
-  const doneSets = state.workoutHistory.reduce((sum, entry) => sum + (entry.doneSets || 0), 0);
-  const allSets = state.workoutHistory.reduce((sum, entry) => sum + (entry.totalSets || 0), 0) || 1;
+  const doneSets = state.plans.reduce(
+    (sum, plan) => sum + plan.items.reduce((acc, item) => acc + item.sets.filter((set) => set.done).length, 0),
+    0,
+  );
+  const allSets = state.plans.reduce((sum, plan) => sum + plan.items.reduce((acc, item) => acc + item.sets.length, 0), 0) || 1;
   const pct = Math.min(100, Math.round((doneSets / allSets) * 100));
 
-  const historyList = state.workoutHistory
-    .slice(0, 8)
-    .map(
-      (entry) => `
-      <article class="card history-item">
-        <div class="row"><strong>${entry.title}</strong><span class="muted">${new Date(entry.date).toLocaleDateString('de-DE')}</span></div>
-        <p class="muted">${entry.exercises} Übungen · ${entry.calories} Kcal · ${entry.points} Punkte</p>
-      </article>
-    `,
-    )
-    .join('');
-
   screens.analysis.innerHTML = `
-    <header class="red-header"><div class="header-top"><div class="avatar">AS</div></div></header>
+    <header class="red-header"><div class="header-top"><div class="avatar">AS</div><button class="plus-btn">+</button></div></header>
     <section class="panel">
-      <article class="card"><strong>Aktivitätslevel</strong><p class="muted">Gesamtpunkte: ${totalPoints()} · Kalorien: ${totalCaloriesFromHistory()}</p></article>
+      <article class="card"><strong>Aktivitätslevel</strong><p class="muted">Punkte bis zum nächsten Level: ${Math.max(0, 200 - totalPoints())}</p></article>
       <article class="card">
         <div class="progress-ring" style="--pct:${pct}%"><span>${totalPoints()}</span></div>
-        <p class="muted" style="text-align:center">${pct}% erledigte Sets aus allen abgeschlossenen Workouts.</p>
+        <p class="muted" style="text-align:center">${pct}% der aktuellen Workout-Sets erledigt.</p>
       </article>
-      <div class="section-title"><h3>History</h3></div>
-      ${historyList || '<article class="card"><p class="muted">Noch keine abgeschlossenen Workouts.</p></article>'}
     </section>
   `;
 }
 
 function renderAccount() {
   screens.account.innerHTML = `
-    <header class="red-header"><div class="header-top"><div class="avatar">AS</div></div></header>
+    <header class="red-header"><div class="header-top"><div class="avatar">AS</div><button class="plus-btn">+</button></div></header>
     <section class="panel">
       <article class="card" style="background:linear-gradient(120deg,#ff1218,#ff5a5f);color:#fff"><strong>Zum ACTIV FITNESS Memberbereich</strong></article>
       <article class="card"><div class="row"><strong>Deals</strong><button class="linkish">Alle ansehen ›</button></div><p class="muted">10% auf Supplements · Gutschein: MoveFit10</p><button class="small-btn">Zum Deal</button></article>

@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'activ-fitness-ui-state-v4';
+const STORAGE_KEY = 'activ-fitness-ui-state-v5';
 
 const state = {
   view: 'home',
@@ -11,6 +11,7 @@ const state = {
   equipment: 'all',
   workoutHistory: [],
   completionSummary: null,
+  showAnnouncement: true,
 };
 
 const screens = {
@@ -127,10 +128,12 @@ function renderHome() {
       <p>Auf die Plätze. Fertig. Workout!</p>
     </header>
     <section class="panel">
-      <article class="card">
-        <div class="row"><strong>Aktuelles</strong><span>26.02.2026 ✕</span></div>
+      ${state.showAnnouncement ? `
+      <article class="card" id="announcement-card">
+        <div class="row"><strong>Aktuelles</strong><button class="icon" id="close-announcement">✕</button></div>
         <p class="muted">🕺🏽 Kurs-Check-in erfolgt automatisch beim Betreten des Studios.</p>
       </article>
+      ` : ''}
       <div class="section-title"><h3>Deine Trainingspläne</h3><button class="linkish" id="go-builder">Alle ansehen ›</button></div>
       <article class="hero" id="open-plan">
         ${cover ? `<img src="${imageFor(cover)}" alt="plan cover" onerror="this.src='${placeholderSvg}'"/>` : ''}
@@ -151,6 +154,11 @@ function renderHome() {
   screens.home.querySelector('#go-builder')?.addEventListener('click', () => {
     switchView('builder');
     renderBuilder();
+  });
+
+  screens.home.querySelector('#close-announcement')?.addEventListener('click', () => {
+    state.showAnnouncement = false;
+    renderHome();
   });
 }
 
@@ -441,7 +449,7 @@ function renderBuilder() {
     <section class="panel">
       <article class="card">
         <div class="row"><strong>Aktiver Plan</strong><select id="plan-switch" class="plan-select">${planSwitch}</select></div>
-        <div class="controls">
+        <div class="controls controls-builder">
           <input id="search" placeholder="Suche Übung..." value="${state.search}" />
           <select id="body-filter">${bodyParts
             .map((part) => `<option value="${part}" ${part === state.bodyPart ? 'selected' : ''}>${part === 'all' ? 'Body Part' : part}</option>`)
@@ -449,17 +457,18 @@ function renderBuilder() {
           <select id="equipment-filter">${equipments
             .map((eq) => `<option value="${eq}" ${eq === state.equipment ? 'selected' : ''}>${eq === 'all' ? 'Equipment' : eq}</option>`)
             .join('')}</select>
+          <button class="small-btn" id="run-search">Suchen</button>
         </div>
+      </article>
+
+      <article class="card">
+        <div class="row"><strong>Suchergebnisse</strong><span class="muted">${pool.length} Treffer</span></div>
+        ${library || '<p class="muted">Keine Treffer.</p>'}
       </article>
 
       <article class="card">
         <div class="row"><strong>Plan Reihenfolge</strong><span class="muted">${plan.items.length} Übungen</span></div>
         ${builderList || '<p class="muted">Keine Übungen im Plan.</p>'}
-      </article>
-
-      <article class="card">
-        <div class="row"><strong>Exercise Library</strong><span class="muted">${pool.length} Treffer</span></div>
-        ${library || '<p class="muted">Keine Treffer.</p>'}
       </article>
 
       <div class="cta-wrap" style="padding-inline:0"><button class="cta" id="save-plan">Plan speichern</button></div>
@@ -476,7 +485,13 @@ function renderBuilder() {
 
   screens.builder.querySelector('#search')?.addEventListener('input', (e) => {
     state.search = e.target.value;
-    renderBuilder();
+  });
+
+  screens.builder.querySelector('#search')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      renderBuilder();
+    }
   });
 
   screens.builder.querySelector('#body-filter')?.addEventListener('change', (e) => {
@@ -486,6 +501,10 @@ function renderBuilder() {
 
   screens.builder.querySelector('#equipment-filter')?.addEventListener('change', (e) => {
     state.equipment = e.target.value;
+    renderBuilder();
+  });
+
+  screens.builder.querySelector('#run-search')?.addEventListener('click', () => {
     renderBuilder();
   });
 
