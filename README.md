@@ -27,12 +27,11 @@ https://www.activfitness.ch/
 Original App:  
 https://www.activfitness.ch/activ-fitness-app/
 
-The UI was recreated solely as a **learning exercise**.
-
 ---
 
 ## Important Disclaimer
 
+- The UI was recreated solely as a **learning exercise**.
 - This project is **not affiliated with, endorsed by, or connected to ACTIV FITNESS**.
 - The interface was recreated **only for educational purposes**.
 - This prototype **does not reproduce the real application functionality**.
