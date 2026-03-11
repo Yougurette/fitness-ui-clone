@@ -43,4 +43,4 @@ https://www.activfitness.ch/activ-fitness-app/
 The main learning objectives of this exercise were:
 - building **interactive UI components**
 - using **AI-assisted coding workflows**
-- experimenting with **fitness dataset integration*
+- experimenting with **fitness dataset integration**
