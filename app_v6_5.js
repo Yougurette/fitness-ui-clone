@@ -198,12 +198,20 @@ function quickSheetMarkup() {
     <aside class="quick-sheet">
       <div class="sheet-grabber"></div>
       <h4>Schnellaktionen</h4>
-      <button data-action="record"><span>🏃</span>Training erfassen <b>›</b></button>
-      <button data-action="courses"><span>🗓️</span>Kurse <b>›</b></button>
-      <button data-action="history"><span>⟲</span>Trainingsverlauf <b>›</b></button>
-      <button data-action="locations"><span>📍</span>Standorte <b>›</b></button>
+      <button data-action="record"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="16" cy="4" r="2"/><path d="M10 20l2-5-2-3m2 3 4 3m-5-8 2-2 3 2m-8 2 4-2"/></svg></span>Training erfassen <b>›</b></button>
+      <button data-action="courses"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>Kurse <b>›</b></button>
+      <button data-action="history"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></span>Trainingsverlauf <b>›</b></button>
+      <button data-action="locations"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span>Standorte <b>›</b></button>
     </aside>
   `;
+}
+
+
+function syncSheetLock() {
+  document.body.classList.toggle('sheet-open', state.showQuickActions);
+  Object.values(screens).forEach((screenEl) => {
+    screenEl.classList.toggle('sheet-open', state.showQuickActions && screenEl.classList.contains('active'));
+  });
 }
 
 function rerenderCurrent() {
@@ -214,6 +222,7 @@ function rerenderCurrent() {
   if (state.view === 'analysis') renderAnalysis();
   if (state.view === 'account') renderAccount();
   if (state.view === 'profile') renderProfile();
+  syncSheetLock();
 }
 
 function bindQuickSheet(scope) {
@@ -343,6 +352,7 @@ function renderHome() {
     renderBuilder();
   });
 
+  syncSheetLock();
   bindQuickSheet(screens.home);
 }
 
@@ -724,6 +734,7 @@ function renderCoursesSection() {
     state.showQuickActions = true;
     renderCoursesSection();
   });
+  syncSheetLock();
   bindQuickSheet(screens.builder);
 }
 
@@ -965,6 +976,7 @@ function renderBuilder() {
     renderBuilder();
   });
 
+  syncSheetLock();
   bindQuickSheet(screens.builder);
 }
 
@@ -1003,6 +1015,7 @@ function renderAnalysis() {
     state.showQuickActions = true;
     renderAnalysis();
   });
+  syncSheetLock();
   bindQuickSheet(screens.analysis);
 }
 
@@ -1020,6 +1033,7 @@ function renderAccount() {
     state.showQuickActions = true;
     renderAccount();
   });
+  syncSheetLock();
   bindQuickSheet(screens.account);
 }
 
@@ -1047,6 +1061,7 @@ function renderProfile() {
     switchView(target);
     rerenderCurrent();
   });
+  syncSheetLock();
 }
 
 function render() {
@@ -1058,6 +1073,7 @@ function render() {
   renderAccount();
   renderProfile();
   switchView(state.view);
+  syncSheetLock();
 }
 
 bindGlobalNav();
