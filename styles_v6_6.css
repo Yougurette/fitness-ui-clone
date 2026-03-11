@@ -487,12 +487,16 @@ button {
 
 .sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 30; }
 
+html.sheet-open,
 body.sheet-open {
-  overflow: hidden;
+  overflow: hidden !important;
+  overscroll-behavior: none;
 }
 
 .screen.sheet-open {
-  overflow: hidden;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
 }
 
 .quick-sheet .qa-icon {
@@ -520,7 +524,8 @@ body.sheet-open {
   z-index: 31;
   padding: 10px 16px 18px;
   max-height: none;
-  overflow: hidden;
+  overflow: hidden !important;
+  touch-action: manipulation;
 }
 .sheet-grabber { width: 42px; height: 5px; border-radius: 99px; background: #d2d2d2; margin: 0 auto 8px; }
 .quick-sheet h4 { margin: 0 0 8px; font-size: 22px; }
@@ -968,4 +973,36 @@ body {
   width: 2px;
   height: 18px;
   background: #d4d4d4;
+}
+
+
+.course-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.course-meta-icon,
+.chip-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-grid;
+  place-items: center;
+  color: #656565;
+}
+
+.course-meta-icon svg,
+.chip-icon svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chip-icon {
+  margin-right: 4px;
+  color: #ef0a0f;
 }

@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'activ-fitness-ui-state-v6';
+const STORAGE_KEY = 'activ-fitness-ui-state-v6_6';
 
 const state = {
   view: 'home',
@@ -208,6 +208,7 @@ function quickSheetMarkup() {
 
 
 function syncSheetLock() {
+  document.documentElement.classList.toggle('sheet-open', state.showQuickActions);
   document.body.classList.toggle('sheet-open', state.showQuickActions);
   Object.values(screens).forEach((screenEl) => {
     screenEl.classList.toggle('sheet-open', state.showQuickActions && screenEl.classList.contains('active'));
@@ -657,7 +658,7 @@ function courseCard(course, compact = false) {
   const badgeClass = course.spots > 2 ? 'ok' : course.spots > 0 ? 'warn' : 'full';
   return `
     <article class="course-card ${compact ? 'compact' : ''}">
-      <div class="row course-top"><span>🗓 ${course.dateLabel} um ${course.time}</span><span class="availability ${badgeClass}">${badge}</span></div>
+      <div class="row course-top"><span class="course-meta"><i class="course-meta-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></i>${course.dateLabel} um ${course.time}</span><span class="availability ${badgeClass}">${badge}</span></div>
       <div class="availability-track"><span class="availability-bar ${badgeClass}"></span></div>
       <h4>${course.title}</h4>
       <p>${course.duration} min mit ${course.instructor}</p>
@@ -675,7 +676,7 @@ function renderCoursesSection() {
       <header class="white-header"><button class="icon" id="back-courses">←</button><h2>Einen Kurs finden</h2></header>
       <section class="panel calendar-panel">
         <div class="chips-scroll">
-          <button class="chip chip-solid">⚙ Filter</button><button class="chip">Alle Kurse</button><button class="chip">Heimstudio</button><button class="chip">Alle Kategorien</button>
+          <button class="chip chip-solid"><i class="chip-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg></i>Filter</button><button class="chip">Alle Kurse</button><button class="chip">Heimstudio</button><button class="chip">Alle Kategorien</button>
         </div>
         <div class="days-scroll">
           ${days.map((d) => {
