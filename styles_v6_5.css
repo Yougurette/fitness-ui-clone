@@ -176,7 +176,7 @@ body {
 }
 
 .hero-overlay h4 {
-  font-size: 28px;
+  font-size: 16px;
 }
 
 .pills {
@@ -224,8 +224,8 @@ body {
 }
 
 .icon {
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   border: none;
   border-radius: 10px;
   background: #fff;
@@ -486,6 +486,32 @@ button {
 .cta { font-size: 18px; }
 
 .sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 30; }
+
+body.sheet-open {
+  overflow: hidden;
+}
+
+.screen.sheet-open {
+  overflow: hidden;
+}
+
+.quick-sheet .qa-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  color: #e40b14;
+}
+
+.quick-sheet .qa-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .quick-sheet {
   position: absolute;
   left: 0; right: 0; bottom: 0;
@@ -493,8 +519,8 @@ button {
   background: #fff;
   z-index: 31;
   padding: 10px 16px 18px;
-  max-height: 56%;
-  overflow: auto;
+  max-height: none;
+  overflow: hidden;
 }
 .sheet-grabber { width: 42px; height: 5px; border-radius: 99px; background: #d2d2d2; margin: 0 auto 8px; }
 .quick-sheet h4 { margin: 0 0 8px; font-size: 22px; }
@@ -750,7 +776,7 @@ body {
 }
 
 .quick-sheet h4 {
-  font-size: 19px;
+  font-size: 15px;
 }
 
 .quick-sheet button {
@@ -801,4 +827,145 @@ body {
 .courses-current-date {
   margin: -4px 2px 10px;
   text-transform: capitalize;
+}
+
+/* v6.5 profile fidelity pass (icons + spacing + shape) */
+.profile-nav-accurate {
+  height: 70px;
+  grid-template-columns: 46px 1fr 46px;
+  background: #fff;
+}
+
+.profile-nav-accurate h2 {
+  font-size: 23px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.profile-top-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+}
+
+.profile-top-icon svg {
+  width: 27px;
+  height: 27px;
+  stroke: #111;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.profile-hero-accurate {
+  background: #f0f0f1;
+  border-radius: 0 !important;
+  padding: 24px 14px 18px;
+}
+
+.profile-avatar {
+  width: 146px;
+  height: 146px;
+  border-radius: 50% !important;
+  background: #e4e4e7;
+  font-size: 46px;
+  font-weight: 700;
+  color: #55575d;
+}
+
+.profile-hero-accurate h3 {
+  font-size: 21px;
+  letter-spacing: -0.4px;
+  margin-bottom: 4px;
+}
+
+.profile-hero-accurate p {
+  font-size: 13px;
+  color: #494c53;
+}
+
+.profile-list-accurate {
+  background: #e6e6e7;
+  padding-top: 10px;
+}
+
+.profile-item {
+  grid-template-columns: 44px 1fr auto;
+  border-radius: 0 !important;
+  border-bottom: 1px solid #e2e2e2;
+  padding: 15px 14px;
+}
+
+.profile-item b {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.profile-item i {
+  font-size: 24px;
+  line-height: 0.6;
+  color: #666;
+  font-weight: 300;
+}
+
+.profile-menu-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  color: #ea0d13;
+}
+
+.profile-menu-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.profile-sub {
+  background: #e6e6e7;
+  font-size: 15px;
+  color: #616161;
+  padding: 10px 14px 12px;
+}
+
+.logout-wrap {
+  bottom: 36px;
+}
+
+.logout-btn {
+  border-radius: 11px !important;
+  border: 2px solid #cacaca;
+  padding: 9px 22px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  background: #fff;
+}
+
+.logout-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(135deg,#ff8f1f,#ff3e00);
+  color: #fff;
+  font-weight: 900;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.logout-sep {
+  width: 2px;
+  height: 18px;
+  background: #d4d4d4;
 }

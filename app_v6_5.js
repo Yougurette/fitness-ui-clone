@@ -198,12 +198,20 @@ function quickSheetMarkup() {
     <aside class="quick-sheet">
       <div class="sheet-grabber"></div>
       <h4>Schnellaktionen</h4>
-      <button data-action="record"><span>🏃</span>Training erfassen <b>›</b></button>
-      <button data-action="courses"><span>🗓️</span>Kurse <b>›</b></button>
-      <button data-action="history"><span>⟲</span>Trainingsverlauf <b>›</b></button>
-      <button data-action="locations"><span>📍</span>Standorte <b>›</b></button>
+      <button data-action="record"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="16" cy="4" r="2"/><path d="M10 20l2-5-2-3m2 3 4 3m-5-8 2-2 3 2m-8 2 4-2"/></svg></span>Training erfassen <b>›</b></button>
+      <button data-action="courses"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>Kurse <b>›</b></button>
+      <button data-action="history"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></span>Trainingsverlauf <b>›</b></button>
+      <button data-action="locations"><span class="qa-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span>Standorte <b>›</b></button>
     </aside>
   `;
+}
+
+
+function syncSheetLock() {
+  document.body.classList.toggle('sheet-open', state.showQuickActions);
+  Object.values(screens).forEach((screenEl) => {
+    screenEl.classList.toggle('sheet-open', state.showQuickActions && screenEl.classList.contains('active'));
+  });
 }
 
 function rerenderCurrent() {
@@ -214,6 +222,7 @@ function rerenderCurrent() {
   if (state.view === 'analysis') renderAnalysis();
   if (state.view === 'account') renderAccount();
   if (state.view === 'profile') renderProfile();
+  syncSheetLock();
 }
 
 function bindQuickSheet(scope) {
@@ -343,6 +352,7 @@ function renderHome() {
     renderBuilder();
   });
 
+  syncSheetLock();
   bindQuickSheet(screens.home);
 }
 
@@ -724,6 +734,7 @@ function renderCoursesSection() {
     state.showQuickActions = true;
     renderCoursesSection();
   });
+  syncSheetLock();
   bindQuickSheet(screens.builder);
 }
 
@@ -965,6 +976,7 @@ function renderBuilder() {
     renderBuilder();
   });
 
+  syncSheetLock();
   bindQuickSheet(screens.builder);
 }
 
@@ -1003,6 +1015,7 @@ function renderAnalysis() {
     state.showQuickActions = true;
     renderAnalysis();
   });
+  syncSheetLock();
   bindQuickSheet(screens.analysis);
 }
 
@@ -1020,26 +1033,50 @@ function renderAccount() {
     state.showQuickActions = true;
     renderAccount();
   });
+  syncSheetLock();
   bindQuickSheet(screens.account);
 }
 
 function renderProfile() {
   screens.profile.innerHTML = `
-    <header class="profile-nav"><button class="icon" id="profile-back">←</button><h2>Mein Profil</h2><button class="icon">🔔</button></header>
-    <section class="profile-hero-wrap">
+    <header class="profile-nav profile-nav-accurate">
+      <button class="icon profile-top-icon" id="profile-back" aria-label="Zurück">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <h2>Mein Profil</h2>
+      <button class="icon profile-top-icon" aria-label="Benachrichtigungen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 17H5l2-2v-5a5 5 0 0 1 10 0v5l2 2h-4"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
+      </button>
+    </header>
+    <section class="profile-hero-wrap profile-hero-accurate">
       <div class="profile-avatar">AS</div>
       <h3>Alexandra Schibli</h3>
       <p>ACTIV FITNESS Luzern</p>
     </section>
-    <section class="profile-list">
-      <button class="profile-item"><span>👤</span><b>Mein Profil</b><i>›</i></button>
+    <section class="profile-list profile-list-accurate">
+      <button class="profile-item">
+        <span class="profile-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4 20a8 8 0 0 1 16 0"/><path d="m18 6 2 2m0-2-2 2"/></svg></span>
+        <b>Mein Profil</b><i>›</i>
+      </button>
       <div class="profile-sub">App Account bearbeiten</div>
-      <button class="profile-item"><span>⚙️</span><b>App-Informationen</b><i>›</i></button>
-      <button class="profile-item"><span>💬</span><b>Hilfe mit der App</b><i>›</i></button>
-      <button class="profile-item"><span>⌘</span><b>Fitnesstracker anbinden</b><i>›</i></button>
-      <button class="profile-item"><span>💬</span><b>Feedback geben</b><i>›</i></button>
+      <button class="profile-item">
+        <span class="profile-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 1 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 1 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a2 2 0 1 1 4 0v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6h.2a2 2 0 1 1 0 4h-.2a1 1 0 0 0-.9.6Z"/></svg></span>
+        <b>App-Informationen</b><i>›</i>
+      </button>
+      <button class="profile-item">
+        <span class="profile-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h14v9H9l-4 3V6z"/></svg></span>
+        <b>Hilfe mit der App</b><i>›</i>
+      </button>
+      <button class="profile-item">
+        <span class="profile-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></span>
+        <b>Fitnesstracker anbinden</b><i>›</i>
+      </button>
+      <button class="profile-item">
+        <span class="profile-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h14v9H9l-4 3V6z"/></svg></span>
+        <b>Feedback geben</b><i>›</i>
+      </button>
     </section>
-    <div class="logout-wrap"><button class="logout-btn">🟧 ABMELDEN</button></div>
+    <div class="logout-wrap"><button class="logout-btn"><span class="logout-mark">M</span><span class="logout-sep"></span>ABMELDEN</button></div>
   `;
 
   screens.profile.querySelector('#profile-back')?.addEventListener('click', () => {
@@ -1047,6 +1084,7 @@ function renderProfile() {
     switchView(target);
     rerenderCurrent();
   });
+  syncSheetLock();
 }
 
 function render() {
@@ -1058,6 +1096,7 @@ function render() {
   renderAccount();
   renderProfile();
   switchView(state.view);
+  syncSheetLock();
 }
 
 bindGlobalNav();
