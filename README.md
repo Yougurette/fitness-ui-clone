@@ -1,6 +1,5 @@
 # fitness-ui-clone
 Focus Module 14: Task UI
- 
 ## Educational UI Prototype
  
 This repository contains a **UI prototype created as part of a study exercise** for *Focus Module 14*.  
