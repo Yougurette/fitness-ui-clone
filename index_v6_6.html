@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ACTIV FITNESS UI Prototype V6.6</title>
+    <link rel="stylesheet" href="styles_v6_6.css" />
+  </head>
+  <body>
+    <main class="phone-shell" id="app">
+      <section id="screen-home" class="screen active"></section>
+      <section id="screen-plan" class="screen"></section>
+      <section id="screen-player" class="screen"></section>
+      <section id="screen-builder" class="screen"></section>
+      <section id="screen-analysis" class="screen"></section>
+      <section id="screen-account" class="screen"></section>
+      <section id="screen-profile" class="screen"></section>
+
+      <nav class="bottom-nav" aria-label="Hauptnavigation">
+        <button class="nav-item active" data-target="home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h3v4H3zM18 10h3v4h-3zM6 11h12M8 8h1v8H8zM15 8h1v8h-1zM9 12h6"/></svg>
+          <span>Training</span>
+        </button>
+        <button class="nav-item" data-target="builder">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+          <span>Kurse</span>
+        </button>
+        <button class="nav-item" data-target="analysis">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 16v-4M12 16V8M17 16v-6"/><path d="M6 7l4-3 4 2 4-3"/></svg>
+          <span>Analyse</span>
+        </button>
+        <button class="nav-item" data-target="account">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13c-3.9 0-7 3-7 6h14c0-3-3.1-6-7-6Z"/><circle cx="12" cy="7" r="3.5"/></svg>
+          <span>Konto</span>
+        </button>
+      </nav>
+    </main>
+
+    <script src="app_v6_6.js" type="module"></script>
+  </body>
+</html>
